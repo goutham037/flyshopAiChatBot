@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: flyshop-ai-chatbot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DB2_HOST
+        sync: false
+      - key: DB2_PORT
+        sync: false
+      - key: DB2_USERNAME
+        sync: false
+      - key: DB2_PASSWORD
+        sync: false
+      - key: DB2_DATABASE
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: USE_MOCK_DATA
+        value: "false"

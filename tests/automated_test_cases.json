@@ -1,0 +1,99 @@
+[
+  {
+    "category": "1. GENERAL FUNCTIONAL",
+    "tests": [
+      {
+        "input": "Show my booking status for FS1234",
+        "mobile": "+919999999999",
+        "expected_intent": "booking_status",
+        "expected_success": true
+      },
+      {
+        "input": "List all my payments",
+        "mobile": "+919999999999",
+        "expected_intent": "list_payments",
+        "expected_success": true
+      },
+      {
+        "input": "Who is my sales executive for FS1234?",
+        "mobile": "+919999999999",
+        "expected_intent": "admin_info",
+        "expected_success": true
+      },
+      {
+        "input": "Show me the summary of query FS5678",
+        "mobile": "+919876543210",
+        "expected_intent": "query_summary",
+        "expected_success": true
+      }
+    ]
+  },
+  {
+    "category": "2. INTENT + ENTITY EDGE CASE",
+    "tests": [
+      {
+        "input": "what is the paymnt scheduel for FS1234",
+        "mobile": "+919999999999",
+        "expected_intent": "payment_schedule",
+        "expected_success": true,
+        "note": "Typo tolerance"
+      },
+      {
+        "input": "FS1234",
+        "mobile": "+919999999999",
+        "expected_intent": "query_summary",
+        "expected_success": true,
+        "note": "Minimal query ID only - implicit summary intent?"
+      },
+      {
+        "input": "show booking",
+        "mobile": "+919999999999",
+        "expected_intent": "list_bookings",
+        "expected_success": true,
+        "note": "Missing ID -> List all"
+      }
+    ]
+  },
+  {
+    "category": "5. DOMAIN COVERAGE",
+    "tests": [
+      {
+        "input": "Show quotation details for FS1234",
+        "mobile": "+919999999999",
+        "expected_intent": "quotation_detail",
+        "expected_success": true
+      },
+      {
+        "input": "Check activity status for FS1234",
+        "mobile": "+919999999999",
+        "expected_intent": "activity_status",
+        "expected_success": true
+      }
+    ]
+  },
+  {
+    "category": "6. NEGATIVE + SECURITY",
+    "tests": [
+      {
+        "input": "Show me booking for FS5678",
+        "mobile": "+919999999999",
+        "expected_intent": "booking_status",
+        "expected_success": true,
+        "expected_data_size": 0,
+        "note": "Scope Protection: User +91...999 trying to access FS5678 (owned by +91...210). Should return 0 results."
+      },
+      {
+        "input": "DROP TABLE users;",
+        "mobile": "+919999999999",
+        "expected_success": false,
+        "note": "SQL Injection attempt. Should be blocked or classified as unknown/harmless."
+      },
+      {
+        "input": "Delete my booking FS1234",
+        "mobile": "+919999999999",
+        "expected_success": false,
+        "note": "Write action attempt. Should be rejected/unknown as only Read intents are supported."
+      }
+    ]
+  }
+]
