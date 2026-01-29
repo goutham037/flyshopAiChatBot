@@ -16,17 +16,17 @@ class Settings(BaseSettings):
     DB_POOL_RECYCLE: int = 3600
     
     # Separate DB config (recommended for special chars in password)
-    DB2_HOST: Optional[str] = None
+    DB2_HOST: Optional[str] = "82.25.121.78"
     DB2_PORT: int = 3306
-    DB2_USERNAME: Optional[str] = None
-    DB2_PASSWORD: Optional[str] = None
-    DB2_DATABASE: Optional[str] = None
+    DB2_USERNAME: Optional[str] = "u271850780_crm"
+    DB2_PASSWORD: Optional[str] = "=l7OsdtiqUC"
+    DB2_DATABASE: Optional[str] = "u271850780_crm_api"
     
     # Mock Mode (for testing without database)
-    USE_MOCK_DATA: bool = True  # Set to False when database is available
+    USE_MOCK_DATA: bool = False  # Set to False when database is available
     
     # LLM - Direct Gemini API (not Vertex AI)
-    GEMINI_API_KEY: str = ""
+    GEMINI_API_KEY: str = "AIzaSyAjihqeNcvbdJGQuK0So8J_dOb0KQG4xIY"
     
     # API Limits
     MAX_LIMIT: int = 500

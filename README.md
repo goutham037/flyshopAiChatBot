@@ -1,105 +1,113 @@
-# FlyShop AI ChatBot - MVP Query API
+# FlyShop AI Chatbot (MVP)
 
-A secure, read-only natural language query API for FlyShop CRM customers to access their travel bookings, payments, and quotations.
+A context-aware AI travel assistant built with **FastAPI**, **Google Gemini**, and **PostgreSQL/MySQL**. It provides a dual-interface for Customers (User Mode) and Administrators (Admin Mode), featuring real-time database RAG (Retrieval-Augmented Generation) and global analytics.
 
-## Features
+## 🚀 Features
 
-- **Natural Language Processing**: Uses Gemini LLM for intent and entity extraction
-- **Mobile-Scoped Security**: All queries filtered by customer's registered mobile number
-- **SQL Template Engine**: Pre-defined safe SQL templates with parameter binding
-- **11 Supported Intents**: Bookings, payments, quotations, activities, and more
+### 👤 User Mode
 
-## Quick Start
+- **Personalized Assistance**: Answers questions based on the user's *specific* booking history, payments, and quotations.
+- **Privacy First**: Sensitive internal data (profits, supplier prices) is strictly filtered out.
+- **Natural Language Querying**: "Show my payment schedule", "Is my Dubai flight confirmed?"
 
-### 1. Install Dependencies
+### 👮 Admin Mode (Inspector)
+
+- **User Inspector**: Search and select any customer to view their full profile and data context.
+- **Financial Visibility**: Admins see profit margins, supplier costs, and markup details that are hidden from users.
+- **AI Analyst**: Ask business-level questions like "What is the profit margin for this booking?"
+
+### 🌍 Global Analytics
+
+- **"All Users" Context**: Admin can switch to a global view to analyze trends across the entire database.
+- **Aggregated Stats**: Instant calculation of Total Revenue, Total Pending Payments, and Query volume.
+- **Senior Analyst Persona**: The AI adapts to answer high-level business questions.
+
+---
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+
+- Python 3.9+
+- Database (PostgreSQL or MySQL) with FlyShop schema
+- Google Gemini API Key
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd flyshopAiChatBot
+```
+
+### 2. Create Virtual Environment
+
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 4. Configuration
 
-Copy `.env.example` to `.env` and update:
+Create a `.env` file in the root directory:
 
-```bash
-cp .env.example .env
+```ini
+# Core
+GEMINI_API_KEY=your_gemini_api_key_here
+USE_MOCK_DATA=False
+
+# Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
 ```
 
-Required settings:
+---
 
-- `DATABASE_URL`: MySQL connection string for read-only user
-- `GEMINI_API_KEY`: Your Gemini API key
+## ▶️ Running the Application
 
-### 3. Run the Server
+Start the backend server using Uvicorn:
 
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 4. Try It Out
+The server will start at `http://127.0.0.1:8000`.
 
-Open <http://localhost:8000/docs> for the Swagger UI.
+---
 
-Example request:
+## 📖 Usage Guide
 
-```bash
-curl -X POST http://localhost:8000/mvp/query \
-  -H "Content-Type: application/json" \
-  -d '{
-    "mobile": "+919999999999",
-    "query": "Show my booking for FS1234"
-  }'
-```
+1. **Open the Interface**: Go to `http://127.0.0.1:8000` in your browser.
+2. **Select Mode**:
+    - **User Mode**: Select a user mobile number to start chatting as that customer.
+    - **Admin Mode**:
+        - Select yourself as the **Admin**.
+        - Select a **Client** to inspect OR select **"🌍 ALL USERS"** for global stats.
+3. **Ask Questions**:
+    - *User*: "Send me my voucher."
+    - *Admin (Inspector)*: "Why is the Pending Amount so high for this user?"
+    - *Admin (Global)*: "What is our total revenue today?"
 
-## API Endpoints
+---
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/mvp/query` | POST | Natural language query |
-| `/health` | GET | Health check |
-| `/intents` | GET | List supported intents |
-| `/docs` | GET | Swagger UI |
+## 📚 API Documentation
 
-## Supported Intents
+Interactive API docs are available at:
 
-- `booking_status` - Flight booking confirmation
-- `list_bookings` - List all bookings
-- `quotation_detail` - Quotation details
-- `list_quotations` - List all quotations
-- `payment_status` - Payment status for a query
-- `list_payments` - List all payments
-- `payment_schedule` - Scheduled payments
-- `activity_status` - Activity booking status
-- `admin_info` - Admin contact info
-- `message_history` - WhatsApp message history
-- `query_summary` - Consolidated query view
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
 
-## Project Structure
+## 🛡️ Security Note
 
-```
-app/
-├── main.py              # FastAPI application
-├── config.py            # Environment configuration
-├── api/
-│   └── query.py         # POST /mvp/query endpoint
-├── core/
-│   ├── intent_extractor.py   # LLM-based extraction
-│   ├── query_planner.py      # Template selection
-│   ├── schema_mapper.py      # Exposed columns
-│   ├── sql_templates.py      # SQL templates
-│   ├── sql_validator.py      # Safety validation
-│   └── response_formatter.py # Response formatting
-├── db/
-│   └── database.py      # Async MySQL connection
-└── models/
-    ├── requests.py      # Request models
-    └── responses.py     # Response models
-```
-
-## Security
-
-- **Read-only DB user**: Only SELECT privileges
-- **Parameter binding**: No SQL string interpolation
-- **Blocked keywords**: INSERT, UPDATE, DELETE, DROP, etc.
-- **Mobile scoping**: All queries filtered by user mobile
-- **PII masking**: Mobile numbers masked in logs
+Data sanitization is handled server-side in `app/api/query.py`. The `sanitize_for_user_mode` function ensures that field-level security is enforced before data ever reaches the LLM or the frontend in User Mode.

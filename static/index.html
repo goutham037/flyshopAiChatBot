@@ -375,9 +375,20 @@
             </div>
 
             <div class="controls">
-                <label>👤 User:</label>
+                <label id="adminLabel" style="display:none;">👮 Admin:</label>
+                <select id="adminSelect" style="display:none;">
+                    <option value="">-- Select Admin --</option>
+                </select>
+
+                <label id="userLabel">👤 User:</label>
                 <select id="userSelect">
                     <option value="">-- Loading Users... --</option>
+                </select>
+
+                <label>⚙️ Mode:</label>
+                <select id="modeSelect">
+                    <option value="user">User Mode</option>
+                    <option value="admin">Admin Mode</option>
                 </select>
 
                 <label>🌐 Language:</label>
@@ -423,6 +434,7 @@
 
     <script>
         const userSelect = document.getElementById('userSelect');
+        const modeSelect = document.getElementById('modeSelect');
         const langSelect = document.getElementById('langSelect');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
@@ -451,6 +463,92 @@
                 dataPanel.classList.remove('active');
             }
         });
+
+        const adminSelect = document.getElementById('adminSelect');
+        const adminLabel = document.getElementById('adminLabel');
+        const userLabel = document.getElementById('userLabel');
+
+        // Toggle list when mode changes
+        modeSelect.addEventListener('change', function () {
+            const mode = this.value;
+
+            // Clear current selection
+            userSelect.value = "";
+            userSelect.dispatchEvent(new Event('change'));
+
+            if (mode === 'admin') {
+                // ADMIN MODE: Show Admin Select AND User Select
+                userLabel.innerText = "🔍 Inspect User:";
+                loadUsers('/users'); // Load users for inspection
+
+                adminLabel.style.display = 'inline-block';
+                adminSelect.style.display = 'inline-block';
+                loadAdmins(); // Load admins into the new dropdown
+            } else {
+                // USER MODE: Show only User Select
+                userLabel.innerText = "👤 User:";
+                loadUsers('/users');
+
+                adminLabel.style.display = 'none';
+                adminSelect.style.display = 'none';
+            }
+        });
+
+        async function loadAdmins() {
+            adminSelect.innerHTML = '<option value="">-- Loading... --</option>';
+            try {
+                const response = await fetch('/admins');
+                let data = await response.json();
+                adminSelect.innerHTML = '<option value="">-- Select Admin --</option>';
+                if (data.users && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.mobile;
+                        option.textContent = `${user.name}`;
+                        adminSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to load admins:", error);
+            }
+        }
+
+        async function loadUsers(endpoint = '/users') {
+            // ... existing loadUsers logic ...
+            const select = document.getElementById('userSelect');
+            select.innerHTML = '<option value="">-- Loading... --</option>';
+            try {
+                const response = await fetch(endpoint);
+                let data = await response.json();
+                select.innerHTML = '<option value="">-- Select --</option>';
+
+                // GLOBAL OPTION: Only if we are in Admin Mode (checking label text is a hack, better check modeSelect)
+                if (document.getElementById('modeSelect').value === 'admin') {
+                    const globalOpt = document.createElement('option');
+                    globalOpt.value = "ALL";
+                    globalOpt.textContent = "🌍 ALL USERS (Global Context)";
+                    globalOpt.style.fontWeight = "bold";
+                    globalOpt.style.color = "#667eea";
+                    select.appendChild(globalOpt);
+                }
+
+                if (data.users && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.mobile;
+                        option.textContent = `${user.name} (${user.mobile})`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.textContent = "No data found";
+                    select.appendChild(option);
+                }
+            } catch (error) {
+                console.error("Failed to load list:", error);
+                select.innerHTML = '<option value="">Error loading list</option>';
+            }
+        }
 
         // Send on Enter key
         messageInput.addEventListener('keydown', function (e) {
@@ -490,7 +588,9 @@
                         mobile: userSelect.value,
                         query: query,
                         conversation_context: contextSummary,
-                        preferred_language: langSelect.value || null
+                        preferred_language: langSelect.value || null,
+                        mode: modeSelect.value || 'user',
+                        admin_mobile: modeSelect.value === 'admin' ? adminSelect.value : null
                     })
                 });
 
@@ -558,44 +658,11 @@
             return div;
         }
 
-        async function loadUsers() {
-            try {
-                // Determine API base URL (adjust if behind a proxy or specific route)
-                const response = await fetch('/mvp/query/users'); // Try specific route first
-                let data;
-                if (!response.ok) {
-                    // Fallback to /users if router mounted differently
-                    const fallback = await fetch('/users');
-                    data = await fallback.json();
-                } else {
-                    data = await response.json();
-                }
-
-                const select = document.getElementById('userSelect');
-                select.innerHTML = '<option value="">-- Select User --</option>';
-
-                if (data.users && data.users.length > 0) {
-                    data.users.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.mobile;
-                        option.textContent = `${user.name} (${user.mobile})`;
-                        select.appendChild(option);
-                    });
-                } else {
-                    const option = document.createElement('option');
-                    option.textContent = "No users found";
-                    select.appendChild(option);
-                }
-            } catch (error) {
-                console.error("Failed to load users:", error);
-                document.getElementById('userSelect').innerHTML = '<option value="">Error loading users</option>';
-            }
-        }
-
         async function loadPanelData(mobile) {
             panelContent.innerHTML = '<div class="empty-state">Loading data...</div>';
             try {
-                const response = await fetch(`/mvp/user-data?mobile=${encodeURIComponent(mobile)}`);
+                const mode = modeSelect.value || 'user';
+                const response = await fetch(`/mvp/user-data?mobile=${encodeURIComponent(mobile)}&mode=${mode}`);
                 const res = await response.json();
 
                 if (res.success && res.data) {
@@ -740,12 +807,11 @@
                     </table>
                 </div>`;
             }
-
             // 8. Quotations
             if (data.recent_quotations && data.recent_quotations.length > 0) {
                 html += `
                 <div class="data-section">
-                    <h3>� Quotations</h3>
+                    <h3> Quotations</h3>
                     <table class="data-table">
                         <thead><tr><th>ID</th><th>Type</th><th>Status</th></tr></thead>
                         <tbody>
@@ -758,6 +824,33 @@
                            `).join('')}
                         </tbody>
                     </table>
+                </div>`;
+            }
+
+            // 9. Markups (Admin Only)
+            if (data.markups && data.markups.length > 0) {
+                html += `
+                <div class="data-section">
+                    <h3 style="color: #d9534f;">💰 Profit Markups (Admin)</h3>
+                    <table class="data-table">
+                        <thead><tr><th>Type</th><th>Value</th><th>ID</th></tr></thead>
+                        <tbody>
+                           ${data.markups.map(m => `
+                                <tr>
+                                    <td>${m.markup_type || 'Fix'}</td>
+                                    <td>${m.markup_value}</td>
+                                    <td>${m.id}</td>
+                                </tr>
+                           `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            } else if (modeSelect.value === 'admin') {
+                // Show empty state for admin if no markups found
+                html += `
+                <div class="data-section">
+                    <h3 style="color: #d9534f;">💰 Profit Markups (Admin)</h3>
+                    <div class="empty-state">No markup data found</div>
                 </div>`;
             }
 

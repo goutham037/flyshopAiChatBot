@@ -42,6 +42,17 @@ class QueryRequest(BaseModel):
         ge=0,
         description="Offset for pagination"
     )
+    mode: str = Field(
+        default="user",
+        description="Operational mode: 'user' (direct to customer) or 'admin' (reporting to admin)",
+        pattern="^(user|admin)$",
+        examples=["user", "admin"]
+    )
+    admin_mobile: Optional[str] = Field(
+        default=None,
+        description="Mobile number of the acting administrator (if mode='admin')",
+        examples=["+918888888888"]
+    )
     
     @field_validator("mobile")
     @classmethod
@@ -50,6 +61,10 @@ class QueryRequest(BaseModel):
         # Remove spaces and normalize
         v = v.strip().replace(" ", "")
         
+        # Allow special "ALL" value for global admin queries
+        if v.upper() == "ALL":
+            return "ALL"
+
         # Check format: +91 followed by 10 digits OR just 10 digits
         # Allow inputs like 9876543210 (add +91) or +919876543210
         if re.match(r"^\d{10}$", v):
